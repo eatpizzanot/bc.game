@@ -15,7 +15,7 @@ var config = {
         label: 'Target Multiplier'
     },
     stopOnProfit: {
-        value: 100000,
+        value: 0,
         type: 'number',
         label: 'Stop on Profit (0 for no limit)'
     },
@@ -27,22 +27,30 @@ var config = {
 }
 
 function main() {
+    // Initialize variables
     let currentBet = config.baseBet.value
     let totalProfit = 0
-    let lastResult = 'none'
     let gameCount = 0
+    let initialBalance = currency.amount
+    let lastBet = 0
     
-    // Initial balance for profit/loss tracking
-    const initialBalance = currency.amount
-    
-    function updateStats(profit) {
+    function updateStats(profit, wasWin) {
         totalProfit = currency.amount - initialBalance
         gameCount++
         
+        // Create detailed log message
+        log.info('------------------------')
         log.info(`Game #${gameCount}`)
-        log.info(`Bet Amount: ${currentBet} ${currency.currencyName}`)
-        log.info(`Profit: ${profit} ${currency.currencyName}`)
-        log.info(`Total Profit: ${totalProfit} ${currency.currencyName}`)
+        log.info(`Last Bet: ${lastBet.toFixed(8)} ${currency.currencyName}`)
+        log.info(`Game Profit: ${profit.toFixed(8)} ${currency.currencyName}`)
+        log.info(`Total Profit: ${totalProfit.toFixed(8)} ${currency.currencyName}`)
+        log.info(`Next Bet Will Be: ${currentBet.toFixed(8)} ${currency.currencyName}`)
+        
+        if (wasWin) {
+            log.success('Result: WIN')
+        } else {
+            log.error('Result: LOSS')
+        }
         log.info('------------------------')
     }
     
@@ -84,26 +92,34 @@ function main() {
         try {
             if (checkStopConditions()) return
             
+            // Store the current bet amount before placing bet
+            lastBet = currentBet
+            
+            // Place bet and await result
             const result = await game.bet(currentBet, config.target.value)
             const profit = result - currentBet
             
             if (profit > 0) {
-                // Win - reset to base bet
-                lastResult = 'win'
+                // WIN - Reset to base bet
+                updateStats(profit, true)
                 currentBet = config.baseBet.value
-                log.success('Win!')
             } else {
-                // Loss - increase bet by 50%
-                lastResult = 'loss'
+                // LOSS - Increase bet by 50%
+                updateStats(profit, false)
                 currentBet = Math.ceil(currentBet * 1.5)
-                log.error('Loss!')
             }
-            
-            updateStats(profit)
             
         } catch (err) {
             log.error('Betting error: ' + err.message)
             game.stop()
         }
     }
+    
+    // Log initial setup
+    log.info('------------------------')
+    log.info('Script Started')
+    log.info(`Base Bet: ${config.baseBet.value} ${currency.currencyName}`)
+    log.info(`Target Multiplier: ${config.target.value}x`)
+    log.info(`Starting Balance: ${initialBalance} ${currency.currencyName}`)
+    log.info('------------------------')
 }
