@@ -15,7 +15,7 @@ var config = {
         label: 'Target Multiplier'
     },
     stopOnProfit: {
-        value: 0,
+        value: 100000,
         type: 'number',
         label: 'Stop on Profit (0 for no limit)'
     },
