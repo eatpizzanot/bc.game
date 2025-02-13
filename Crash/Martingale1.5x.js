@@ -58,7 +58,7 @@ function main() {
                 if (config.onLoss.value === "reset") {
                     currentBet = config.baseBet.value;
                 } else {
-                    currentBet = Math.ceil(currentBet * 1.5);
+                    currentBet = Math.ceil(currentBet * 2.0);
                 }
                 log.error("Lost! Next bet will be " + currentBet + " " + currency.currencyName);
             }
